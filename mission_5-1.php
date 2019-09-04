@@ -9,9 +9,9 @@
 
 <?php
 //MySQL内のデータベースへの接続(pdoの構築)
-$dsn='mysql:dbname=データベース名; host=localhost';
-$user='ユーザー名';
-$password='パスワード';
+$dsn='mysql:dbname=tb210262db; host=localhost';
+$user='tb-210262';
+$password='uk43eK4yRF';
 $pdo=new PDO($dsn, $user, $password, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING));
 
 
@@ -32,7 +32,9 @@ $stmt = $pdo->query($sql);
 $edit_num = "";
 $edit_name = "";
 $edit_mess = "";
-if(isset($_POST["edit"])&&isset($_POST["editNo"])&&isset($_POST["pass3"])){ 
+$edit = "";
+
+if(!empty($_POST["edit"])&&!empty($_POST["editNo"])&&!empty($_POST["pass3"])){ 
 	$id = $_POST["editNo"];  //編集したい番号・パスワードの指定
 	$pass = $_POST["pass3"];
 	$sql = 'SELECT * FROM bulletin_board';
@@ -43,6 +45,7 @@ if(isset($_POST["edit"])&&isset($_POST["editNo"])&&isset($_POST["pass3"])){
 			$edit_num = $row['id'];
 			$edit_name = $row['name'];
 			$edit_mess = $row['comment'];
+			$edit = "編集完了";
 		}
 	}
 }
@@ -93,8 +96,18 @@ placeholder="コメント">
 
 <p><input type="submit" name="edit" value="編集">
 <p>
-</form>
 
+
+
+<p><p><h4>【管理者権限/オールデリート】</h4>
+掲示板リセット<input type="radio" name="radiodelete" value="オールデリート">
+
+<br><label for="pass-word4">パスワード：</label>
+<input id="pass-word4" type="password" name="pass4" placeholder="パスワード">
+
+<p><input type="submit" name="Alldelete" value="オールデリート実行">
+<p><p>
+</form>
 
 
 <?php
@@ -142,9 +155,10 @@ if(!empty($_POST["delete"])){
 	}
 }
 	//削除の条件分岐
-if(isset($_POST["delete"])&&isset($_POST["deleteNo"])&&isset($_POST["pass2"])){  
+if(!empty($_POST["delete"])&&!empty($_POST["deleteNo"])&&!empty($_POST["pass2"])){  
 	$id = $_POST["deleteNo"];  //削除したい番号・パスワードの指定
 	$pass = $_POST["pass2"];
+	$delete = "";
 
 	//テーブル内のレコードをfetchAllで配列化。pass,idの一致確認。
 	//それによるメッセージの表記
@@ -154,8 +168,16 @@ if(isset($_POST["delete"])&&isset($_POST["deleteNo"])&&isset($_POST["pass2"])){
 	foreach ($results as $row){
 		if(($id == $row['id'])&&($pass == $row['password'])){
 			echo "【報告】投稿番号 ".$id." が削除されました。<br>";
+			$delete = "完了";
 		}
 	}
+
+	//ループ関数内にエラー表記の条件分岐を置くとメッセージが多重に表示される
+	//よって変数を介することでレスポンスを一回に絞った。
+	if($delete != "完了"){
+		echo  "【エラー】削除番号とパスワードが一致していません<br>";
+	}
+			
 
 	//プリペアドステートメントSQL文の準備
 	//SQL文を実行し削除処理
@@ -165,7 +187,6 @@ if(isset($_POST["delete"])&&isset($_POST["deleteNo"])&&isset($_POST["pass2"])){
 	$stmt->bindParam(':pass2', $pass, PDO::PARAM_STR);
 	$stmt->execute();
 }      
-					//今後：パスワードの不一致によるエラーメッセージの実装、
 
 
 //編集処理
@@ -188,6 +209,7 @@ if(!empty($_POST["edit_num"])&&!empty($_POST["comment"])&&!empty($_POST["name"])
 	$ediname=$_POST["name"];
 	$edimess=$_POST["comment"];
 	$edipass=$_POST["pass1"];
+	$edit = "";
 	
 	//削除の際と同様にSELECT取得後、配列化して編集の完了報告
 	$sql1 = 'SELECT * FROM bulletin_board';
@@ -209,6 +231,12 @@ if(!empty($_POST["edit_num"])&&!empty($_POST["comment"])&&!empty($_POST["name"])
 	$stmt->execute();
 }
 
+	//編集選択時に不一致によるエラー。エラー表示場所の関係でここに。原理は削除処理の時と同じ。
+if(!empty($_POST["edit"])&&!empty($_POST["editNo"])&&!empty($_POST["pass3"])){ 
+	if($edit != "編集完了"){
+		echo  "【エラー】編集番号とパスワードが一致していません<br>";
+	}
+}
 
 	//編集フォームのエラーメッセージ
 if(!empty($_POST["edit"])){
@@ -221,7 +249,28 @@ if(!empty($_POST["edit"])){
 }
 
 
-					//今後：パスワードの不一致によるエラーメッセージの実装、
+//autouncrimentはid数がリセットされないので全削除で基に戻せる機能をいちよつけとく
+$allpass = "neko";
+if(!empty($_POST["radiodelete"])&&!empty($_POST["Alldelete"])&&!empty($_POST["pass4"])){
+	if($allpass == $_POST["pass4"]){
+		$sql = 'TRUNCATE TABLE bulletin_board';
+		$stmt = $pdo->query($sql);
+		echo "【報告】全投稿内容を削除しました<br>";
+	} else { echo "【エラー】管理者パスワードが間違ってます<br>";
+		}
+}
+
+//オールデリート用のエラーメッセージ
+if(!empty($_POST["Alldelete"])){
+	if(empty($_POST["radiodelete"])){
+	echo "【エラー】チェックを入れてください<br>";
+	}
+	elseif($_POST["pass4"]==""){
+	echo "<br>【エラー】管理者パスワードを入力してください<br>";
+	}
+}
+
+
 
 //データベース内の一覧表示
 echo "<br>【投稿一覧】<br>";
@@ -238,6 +287,8 @@ foreach ($results as $row){
 	echo $row['password'].'<br>';
 echo "<hr>";
 }
+
+
 ?>
 
 
