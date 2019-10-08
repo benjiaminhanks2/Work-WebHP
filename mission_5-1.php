@@ -9,9 +9,9 @@
 
 <?php
 //MySQL内のデータベースへの接続(pdoの構築)
-$dsn='mysql:dbname=tb210262db; host=localhost';
-$user='tb-210262';
-$password='uk43eK4yRF';
+$dsn='mysql:dbname=データベース名; host=localhost';
+$user='ユーザー名';
+$password='パスワード';
 $pdo=new PDO($dsn, $user, $password, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING));
 
 
